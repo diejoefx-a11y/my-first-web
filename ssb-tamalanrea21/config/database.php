@@ -9,7 +9,7 @@ if ($host_server == 'localhost' || $host_server == '127.0.0.1' || strpos($host_s
     $db_host = "localhost";
     $db_user = "root";          // Default XAMPP di semua laptop
     $db_pass = "";              // Default password XAMPP (kosong)
-    $db_name = "my_first_web";   // Nama database lokal Anda
+    $db_name = "u12345_ssb";   // Nama database lokal Anda
 } else {
     // -------------------------------------------------------------
     // KONFIGURASI ONLINE (Server Niagahoster)
