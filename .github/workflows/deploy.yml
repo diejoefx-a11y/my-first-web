@@ -22,3 +22,4 @@ jobs:
           server-dir: ./
           protocol: ftp
           security-mode: loose
+          dangerous-clean-up: true
