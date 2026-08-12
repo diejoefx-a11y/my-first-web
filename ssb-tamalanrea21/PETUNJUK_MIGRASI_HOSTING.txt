@@ -1,0 +1,51 @@
+================================================================================
+PETUNJUK PENGGUNAAN & MIGRASI WEB SSB TAMALANREA KE HOSTING ONLINE (cPANEL / WHM)
+================================================================================
+
+File ZIP ini sudah berisi seluruh source code website SSB Tamalanrea lengkap dengan:
+1. File Database SQL terbaru: db_ssb_tamalanrea.sql
+2. Semua folder aplikasi: assets, atlet, config, evaluasi, includes, iuran, turnamen
+3. Konfigurasi Apache & Keamanan: .htaccess
+
+--------------------------------------------------------------------------------
+LANGKAH-LANGKAH MIGRASI KE HOSTING ONLINE:
+--------------------------------------------------------------------------------
+
+1. UPLOAD FILE WEBSITE KE HOSTING:
+   - Masuk ke cPanel Hosting Anda.
+   - Buka menu "File Manager".
+   - Masuk ke folder "public_html" (atau sub-domain folder jika menggunakan subdomain).
+   - Klik "Upload" dan pilih file ZIP ini (ssb_tamalanrea_hosting.zip).
+   - Setelah selesai upload, Extract file ZIP tersebut di dalam folder public_html.
+
+2. MEMBUAT DATABASE & IMPORT FILE SQL:
+   - Di cPanel, buka menu "MySQL® Database Wizard".
+   - Buat nama database baru (contoh: user_ssbtamalanrea).
+   - Buat user database baru dan buat password yang kuat.
+   - Berikan hak akses "ALL PRIVILEGES" kepada user database tersebut.
+   - Selanjutnya, buka menu "phpMyAdmin" di cPanel.
+   - Pilih database yang baru saja dibuat di panel sebelah kiri.
+   - Klik tab "Import", pilih file "db_ssb_tamalanrea.sql" yang ada di folder public_html.
+   - Klik tombol "Go" / "Kirim" di paling bawah untuk mengimpor seluruh tabel dan data.
+
+3. CONFIGURE DATABASE CONNECTION:
+   - Di File Manager cPanel, buka folder "config" dan edit file "database.php".
+   - Ubah baris konfigurasi berikut sesuai data database cPanel Anda:
+     
+     $host   = 'localhost';              // Tetap localhost
+     $user   = 'NAMA_USER_DATABASE';     // Contoh: user_ssbuser
+     $pass   = 'PASSWORD_DATABASE';      // Password user database hosting
+     $dbname = 'NAMA_DATABASE_HOSTING';  // Contoh: user_ssbtamalanrea
+
+   - Simpan perubahan file database.php.
+
+4. UJI COBA WEBSITE:
+   - Buka nama domain Anda di browser (contoh: https://ssbtamalanrea.com).
+   - Uji coba login Akun Administrator / Pelatih / Orang Tua.
+   - Data Login Default Administrator:
+     Username / NISN : admin
+     Password        : admin123
+
+================================================================================
+Selamat! Website SSB Tamalanrea Anda telah siap digunakan secara online.
+================================================================================
