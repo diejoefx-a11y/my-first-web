@@ -1,0 +1,22 @@
+name: Deploy Web ke Niagahoster
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: 🎉 Sync Kode ke Niagahoster
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Ambil Kode Terbaru dari GitHub
+        uses: actions/checkout@v4
+
+      - name: 📂 Upload File ke Niagahoster via FTP
+        uses: SamKirsch/ftp-deploy-action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /public_html/
