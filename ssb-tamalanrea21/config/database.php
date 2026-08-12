@@ -9,15 +9,15 @@ if ($host_server == 'localhost' || $host_server == '127.0.0.1' || strpos($host_s
     $db_host = "localhost";
     $db_user = "root";          // Default XAMPP di semua laptop
     $db_pass = "";              // Default password XAMPP (kosong)
-    $db_name = "u12345_ssb";   // Nama database lokal Anda
+    $db_name = "u5518691_dbssb21";   // Nama database lokal Anda
 } else {
     // -------------------------------------------------------------
     // KONFIGURASI ONLINE (Server Niagahoster)
     // -------------------------------------------------------------
     $db_host = "localhost";
-    $db_user = "u12345_ssb";     // Username DB Niagahoster
+    $db_user = "u5518691_ssb21";     // Username DB Niagahoster
     $db_pass = "!Myh34rth97";    // Password DB Niagahoster
-    $db_name = "u12345_ssb";        // Nama DB Niagahoster
+    $db_name = "u5518691_dbssb21";        // Nama DB Niagahoster
 }
 
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
