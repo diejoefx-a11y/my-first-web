@@ -11,11 +11,16 @@ $userInitials = strtoupper(substr($user['nama_lengkap'] ?? 'ADM', 0, 2));
 ?>
 <aside class="sidebar">
     <div class="brand-header">
-        <div class="brand-logo">SSB</div>
-        <div class="brand-title">
-            SSB TAMALANREA
-            <span>PORTAL ATLET</span>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="brand-logo">SSB</div>
+            <div class="brand-title">
+                SSB TAMALANREA
+                <span>PORTAL ATLET</span>
+            </div>
         </div>
+        <button id="sidebarClose" class="sidebar-close-btn" aria-label="Tutup Sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
     </div>
 
     <ul class="nav-menu">

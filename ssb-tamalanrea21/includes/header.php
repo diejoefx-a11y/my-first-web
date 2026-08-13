@@ -16,6 +16,8 @@ $baseUrl = ($current_dir === 'atlet' || $current_dir === 'evaluasi' || $current_
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= $baseUrl ?>assets/css/style.css">
+    <script src="<?= $baseUrl ?>assets/js/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <?php include_once __DIR__ . '/sidebar.php'; ?>
@@ -44,7 +46,10 @@ $baseUrl = ($current_dir === 'atlet' || $current_dir === 'evaluasi' || $current_
                     Logout
                 </a>
 
-                <button id="menuToggle" class="btn btn-secondary btn-sm" style="display:none;">Menu</button>
+                <button id="menuToggle" class="btn btn-secondary btn-sm btn-menu-toggle" style="color:#818cf8; border-color:rgba(99,102,241,0.3);" title="Buka Menu Sidebar">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    Menu
+                </button>
             </div>
         </header>
 

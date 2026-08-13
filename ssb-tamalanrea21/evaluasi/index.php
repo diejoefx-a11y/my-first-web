@@ -35,7 +35,7 @@ if (count($where) > 0) {
 
 // Fetch All Records For Statistics Calculation
 $sqlAll = "
-    SELECT e.*, a.nama_lengkap, a.kelompok_usia, a.posisi_utama, a.foto_profil
+    SELECT e.*, a.nama_lengkap, a.kelompok_usia, a.posisi_utama, a.posisi_sekunder, a.foto_profil
     FROM evaluasi_atlet e 
     JOIN atlet a ON e.atlet_id = a.id 
     $whereSql
@@ -173,9 +173,6 @@ include_once __DIR__ . '/../includes/header.php';
             <h2 class="card-title">Raport Perkembangan Fisik & Teknis Atlet</h2>
             <p style="font-size:0.82rem; color:var(--text-muted);">Riwayat Penilaian Berkala oleh Tim Pelatih SSB Tamalanrea (Maksimal 10 Data per Halaman)</p>
         </div>
-        <?php if ($canEdit): ?>
-            <a href="tambah.php" class="btn btn-primary btn-sm">+ Input Raport / Evaluasi Baru</a>
-        <?php endif; ?>
     </div>
 
     <?php if (isset($_GET['success']) && $_GET['success'] === 'eval_updated'): ?>
@@ -273,7 +270,14 @@ include_once __DIR__ . '/../includes/header.php';
 
                             <td style="padding: 8px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); border-right: 1px solid rgba(255, 255, 255, 0.08); text-align: center; white-space:nowrap;">
                                 <span class="badge badge-primary" style="font-size:0.65rem; padding:1px 6px;"><?= htmlspecialchars($ev['kelompok_usia']) ?></span>
-                                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600; margin-top:1px;"><?= htmlspecialchars($ev['posisi_utama']) ?></div>
+                                <div style="font-size:0.72rem; color:#38bdf8; font-weight:700; margin-top:2px;">
+                                    ⚽ <?= htmlspecialchars($ev['posisi_utama'] ?: '-') ?>
+                                </div>
+                                <?php if (!empty($ev['posisi_sekunder']) && $ev['posisi_sekunder'] !== '-'): ?>
+                                    <div style="font-size:0.68rem; color:#7dd3fc; font-weight:600; margin-top:1px;">
+                                        🔄 <?= htmlspecialchars($ev['posisi_sekunder']) ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
 
                             <td style="padding: 8px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); border-right: 1px solid rgba(255, 255, 255, 0.08); text-align: center; font-size:0.8rem; color:#cbd5e1; white-space:nowrap;">
@@ -306,12 +310,8 @@ include_once __DIR__ . '/../includes/header.php';
 
                             <td style="padding: 8px 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); text-align: center; white-space:nowrap;">
                                 <div style="display:flex; gap:4px; justify-content:center;">
-                                    <a href="../atlet/detail.php?id=<?= $ev['atlet_id'] ?>" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.75rem;" title="Profil Atlet">Profil</a>
                                     <?php if ($canEdit): ?>
-                                        <a href="edit.php?id=<?= $ev['id'] ?>" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#fbbf24;" title="Edit Evaluasi">Edit</a>
-                                    <?php endif; ?>
-                                    <?php if ($role === 'admin'): ?>
-                                        <a href="hapus.php?id=<?= $ev['id'] ?>" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#f87171;" title="Hapus Evaluasi" onclick="return confirm('Apakah Anda yakin ingin menghapus evaluasi <?= htmlspecialchars(addslashes($ev['nama_lengkap'])) ?>?');">Hapus</a>
+                                        <a href="edit.php?id=<?= $ev['id'] ?>" class="btn btn-secondary btn-sm" style="padding:2px 6px; font-size:0.75rem; color:#fbbf24;" title="Edit Evaluasi">Edit Raport</a>
                                     <?php endif; ?>
                                 </div>
                             </td>

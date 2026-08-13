@@ -40,14 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_tournament']))
     $kelompok_usia = trim($_POST['kelompok_usia'] ?? 'Semua KU');
     $lokasi = trim($_POST['lokasi'] ?? '');
     $pencapaian = trim($_POST['pencapaian'] ?? '');
+    $kebobolan = (int)($_POST['kebobolan'] ?? 0);
     $tanggal_mulai = $_POST['tanggal_mulai'] ?: date('Y-m-d');
     $tanggal_selesai = $_POST['tanggal_selesai'] ?: $tanggal_mulai;
 
     if (empty($nama_turnamen)) {
         $error = "Nama turnamen / liga tidak boleh kosong!";
     } else {
-        $stmtUpd = $pdo->prepare("UPDATE turnamen SET nama_turnamen = ?, kelompok_usia = ?, lokasi = ?, pencapaian = ?, tanggal_mulai = ?, tanggal_selesai = ? WHERE id = ?");
-        $stmtUpd->execute([$nama_turnamen, $kelompok_usia, $lokasi, $pencapaian, $tanggal_mulai, $tanggal_selesai, $id]);
+        $stmtUpd = $pdo->prepare("UPDATE turnamen SET nama_turnamen = ?, kelompok_usia = ?, lokasi = ?, pencapaian = ?, kebobolan = ?, tanggal_mulai = ?, tanggal_selesai = ? WHERE id = ?");
+        $stmtUpd->execute([$nama_turnamen, $kelompok_usia, $lokasi, $pencapaian, $kebobolan, $tanggal_mulai, $tanggal_selesai, $id]);
 
         header("Location: index.php?msg=tourney_updated");
         exit;
@@ -96,9 +97,13 @@ include_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="form-grid" style="margin-bottom: 1.25rem;">
-            <div class="form-group" style="grid-column: span 2;">
+            <div class="form-group">
                 <label>Pencapaian / Prestasi</label>
                 <input type="text" name="pencapaian" class="form-control" value="<?= htmlspecialchars($tournament['pencapaian']) ?>">
+            </div>
+            <div class="form-group">
+                <label>🥅 Total Kebobolan Tim</label>
+                <input type="number" name="kebobolan" class="form-control" min="0" value="<?= (int)($tournament['kebobolan'] ?? 0) ?>" style="font-weight: 700;">
             </div>
         </div>
 

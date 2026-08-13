@@ -494,11 +494,96 @@ body {
     margin-bottom: 0.75rem;
 }
 
+/* Mobile Menu Toggle Button & Overlay Styles */
+.btn-menu-toggle {
+    display: none;
+    color: #818cf8 !important;
+    border-color: rgba(99, 102, 241, 0.35) !important;
+    background: rgba(99, 102, 241, 0.1) !important;
+    transition: all 0.25s ease;
+}
+
+.btn-menu-toggle:hover, .btn-menu-toggle:active {
+    background: rgba(99, 102, 241, 0.25) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+}
+
+.sidebar-close-btn {
+    display: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+    background: rgba(244, 63, 94, 0.2);
+    color: #f87171;
+    border-color: rgba(244, 63, 94, 0.4);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Media Queries */
 @media (max-width: 992px) {
-    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
-    .sidebar.open { transform: translateX(0); }
-    .main-wrapper { margin-left: 0; }
+    .btn-menu-toggle {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 10px 0 35px rgba(0, 0, 0, 0.6);
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .brand-header {
+        justify-content: space-between;
+    }
+
+    .sidebar-close-btn {
+        display: flex;
+    }
+    
+    .main-wrapper {
+        margin-left: 0;
+    }
 }
 
 /* Tournament Dashboard & Leaderboard Custom Styles */

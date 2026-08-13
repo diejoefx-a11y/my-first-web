@@ -94,6 +94,103 @@ $articles = [
 ];
 
 $featuredArticle = $articles[0]; // Article utama
+
+// Attempt DB load for KU Counts
+$kuCountsHome = [];
+if (file_exists(__DIR__ . '/ssb-tamalanrea21/config/database.php')) {
+    @include_once __DIR__ . '/ssb-tamalanrea21/config/database.php';
+    if (isset($pdo) && $pdo) {
+        try {
+            $kuCountsHome = $pdo->query("SELECT kelompok_usia, COUNT(*) as total FROM atlet WHERE status_keanggotaan = 'Aktif' GROUP BY kelompok_usia")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {}
+    }
+}
+
+if (empty($kuCountsHome)) {
+    $kuCountsHome = [
+        ['kelompok_usia' => 'U-8', 'total' => 18],
+        ['kelompok_usia' => 'U-10', 'total' => 24],
+        ['kelompok_usia' => 'U-12', 'total' => 35],
+        ['kelompok_usia' => 'U-14', 'total' => 28],
+        ['kelompok_usia' => 'U-16', 'total' => 22],
+        ['kelompok_usia' => 'U-18', 'total' => 15],
+        ['kelompok_usia' => 'Senior', 'total' => 10],
+    ];
+}
+
+// Order strictly: U-8 (far left) to Senior (far right)
+$kuMasterOrder = ['U-8', 'U-10', 'U-12', 'U-14', 'U-16', 'U-18', 'Senior'];
+usort($kuCountsHome, function($a, $b) use ($kuMasterOrder) {
+    $posA = array_search($a['kelompok_usia'], $kuMasterOrder);
+    $posB = array_search($b['kelompok_usia'], $kuMasterOrder);
+    if ($posA === false) $posA = 999;
+    if ($posB === false) $posB = 999;
+    return $posA <=> $posB;
+});
+
+// Calculate Dynamic Green Palette (U-8 Hijau Muda -> Senior Hijau Tua)
+$kuHomeLabels = [];
+$kuHomeValues = [];
+$kuHomeBorderColors = [];
+$kuHomeStatColors = [];
+$countKuHome = count($kuCountsHome);
+$totalAtletHome = array_sum(array_column($kuCountsHome, 'total'));
+
+foreach ($kuCountsHome as $i => $ku) {
+    $kuHomeLabels[] = $ku['kelompok_usia'];
+    $kuHomeValues[] = (int)$ku['total'];
+    
+    $ratio = ($countKuHome > 1) ? ($i / ($countKuHome - 1)) : 0;
+    $lightness = round(68 - ($ratio * 43)); // 68% (hijau muda) -> 25% (hijau tua)
+    $hue = round(140 + ($ratio * 15));      // 140 (emerald/mint) -> 155 (forest green)
+    
+    $borderLightness = min(92, $lightness + 12);
+    $kuHomeBorderColors[] = "hsl({$hue}, 85%, {$borderLightness}%)";
+    $kuHomeStatColors[] = "hsl({$hue}, 82%, {$lightness}%)";
+}
+
+// Compute SVG Smooth Curve Area Coordinates (100% Guaranteed Display)
+$svgWidth = 700;
+$svgHeight = 220;
+$paddingX = 55;
+$paddingYTop = 35;
+$paddingYBtm = 175;
+$availWidth = $svgWidth - ($paddingX * 2);
+$availHeight = $paddingYBtm - $paddingYTop;
+
+$maxValAreaHome = max(array_merge([1], $kuHomeValues));
+$numPtsHome = count($kuCountsHome);
+$ptsHome = [];
+
+foreach ($kuCountsHome as $idx => $ku) {
+    $val = (int)$ku['total'];
+    $x = $paddingX + ($numPtsHome > 1 ? ($idx / ($numPtsHome - 1)) * $availWidth : 0);
+    $y = $paddingYBtm - (($val / $maxValAreaHome) * $availHeight);
+    $ptsHome[] = ['x' => round($x, 1), 'y' => round($y, 1), 'val' => $val, 'label' => $ku['kelompok_usia']];
+}
+
+$dPathHome = "";
+$dAreaHome = "";
+if (count($ptsHome) > 0) {
+    $dPathHome = "M " . $ptsHome[0]['x'] . "," . $ptsHome[0]['y'];
+    for ($i = 0; $i < count($ptsHome) - 1; $i++) {
+        $p0 = $ptsHome[max(0, $i - 1)];
+        $p1 = $ptsHome[$i];
+        $p2 = $ptsHome[$i + 1];
+        $p3 = $ptsHome[min(count($ptsHome) - 1, $i + 2)];
+        
+        $cp1x = $p1['x'] + ($p2['x'] - $p0['x']) / 6;
+        $cp1y = $p1['y'] + ($p2['y'] - $p0['y']) / 6;
+        $cp2x = $p2['x'] - ($p3['x'] - $p1['x']) / 6;
+        $cp2y = $p2['y'] - ($p3['y'] - $p1['y']) / 6;
+        
+        $dPathHome .= sprintf(" C %.1f,%.1f %.1f,%.1f %.1f,%.1f", $cp1x, $cp1y, $cp2x, $cp2y, $p2['x'], $p2['y']);
+    }
+    
+    $firstX = $ptsHome[0]['x'];
+    $lastX = $ptsHome[count($ptsHome) - 1]['x'];
+    $dAreaHome = $dPathHome . sprintf(" L %.1f,%d L %.1f,%d Z", $lastX, $paddingYBtm, $firstX, $paddingYBtm);
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -111,6 +208,8 @@ $featuredArticle = $articles[0]; // Article utama
     
     <!-- CSS Custom -->
     <link rel="stylesheet" href="assets/css/landing.css">
+    <script src="assets/js/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -129,6 +228,7 @@ $featuredArticle = $articles[0]; // Article utama
             
             <ul class="nav-menu" id="nav-menu">
                 <li><a href="#berita" class="nav-link active">Berita Terkini</a></li>
+                <li><a href="#kelompok-usia" class="nav-link" style="color:#4ade80; font-weight:700;"><i class="fa-solid fa-chart-column" style="margin-right:4px;"></i> Kelompok Usia</a></li>
                 <li><a href="#kategori" class="nav-link">Kategori</a></li>
                 <li><a href="#tentang-ssb" class="nav-link">Tentang SSB</a></li>
                 <li><a href="/pos-fotocopy" class="nav-link" target="_blank"><i class="fa-solid fa-print" style="margin-right:4px;"></i> POS Fotocopy</a></li>
@@ -227,6 +327,99 @@ $featuredArticle = $articles[0]; // Article utama
                             <i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Info Pendaftaran WA
                         </a>
                     </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- KELOMPOK USIA SHOWCASE SECTION (SMOOTH GLOWING AREA CHART) -->
+        <section class="ku-showcase-section" id="kelompok-usia" style="margin: 2.5rem 0 2rem 0;">
+            <div style="background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 1.75rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
+                
+                <!-- Header Section -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:1rem;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:46px; height:46px; background:rgba(52,211,153,0.18); border:1px solid rgba(52,211,153,0.35); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#34d399; font-size:1.4rem;">
+                            📈
+                        </div>
+                        <div>
+                            <h3 style="font-size:1.3rem; font-weight:800; color:#fff; margin:0;">Komponen UI Kelompok Usia (Grafik Area Smooth)</h3>
+                            <span style="font-size:0.82rem; color:#94a3b8;">Sumbu Vertikal: <strong>Jumlah Atlet</strong> | Sumbu Horizontal: <strong>Kelompok Usia (U-8 s/d Senior)</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div style="background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.3); color:#34d399; padding:0.45rem 1rem; border-radius:12px; font-weight:700; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                        <span>👥 Total Atlet:</span>
+                        <strong style="color:#fff; font-size:1.15rem;"><?= number_format($totalAtletHome) ?></strong>
+                    </div>
+                </div>
+
+                <!-- GLOWING SMOOTH AREA CHART CONTAINER -->
+                <div class="smooth-area-chart-container" style="background: rgba(10, 15, 30, 0.6); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                    
+                    <!-- Axis Indicator Labels Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px dashed rgba(255,255,255,0.1); flex-wrap: wrap; gap: 8px;">
+                        <div style="font-size: 0.82rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-arrow-up" style="font-size:0.75rem;"></i> KETERANGAN VERTIKAL: JUMLAH ATLET (SKALA TINGGI)
+                        </div>
+                        <div style="font-size: 0.82rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                            KETERANGAN HORIZONTAL: KELOMPOK USIA (U-8 ➔ SENIOR) <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pure SVG Glowing Smooth Area Wave Diagram (100% Always Visible!) -->
+                    <div style="position:relative; width:100%; height:240px; margin-bottom:1rem;">
+                        <svg viewBox="0 0 700 220" style="width:100%; height:100%; overflow:visible;">
+                            <defs>
+                                <linearGradient id="areaGlowGradHome" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#34d399" stop-opacity="0.45" />
+                                    <stop offset="50%" stop-color="#10b981" stop-opacity="0.22" />
+                                    <stop offset="100%" stop-color="#064e3b" stop-opacity="0.02" />
+                                </linearGradient>
+                                <filter id="lineShadowHome" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#34d399" flood-opacity="0.5"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Horizontal Grid Lines -->
+                            <line x1="35" y1="35" x2="665" y2="35" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4" />
+                            <line x1="35" y1="105" x2="665" y2="105" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4" />
+                            <line x1="35" y1="175" x2="665" y2="175" stroke="rgba(255,255,255,0.12)" />
+
+                            <!-- Wave Filled Area -->
+                            <path d="<?= $dAreaHome ?>" fill="url(#areaGlowGradHome)" />
+
+                            <!-- Wave Smooth Line -->
+                            <path d="<?= $dPathHome ?>" fill="none" stroke="#34d399" stroke-width="3.5" filter="url(#lineShadowHome)" stroke-linecap="round" />
+
+                            <!-- Dynamic Point Nodes & Labels -->
+                            <?php foreach ($ptsHome as $idx => $pt): 
+                                $accentColor = $kuHomeBorderColors[$idx] ?? '#34d399';
+                            ?>
+                                <!-- Node Circle Point -->
+                                <circle cx="<?= $pt['x'] ?>" cy="<?= $pt['y'] ?>" r="6.5" fill="<?= $accentColor ?>" stroke="#ffffff" stroke-width="2.5" />
+                                
+                                <!-- Value Number Floating on Top of Point -->
+                                <text x="<?= $pt['x'] ?>" y="<?= $pt['y'] - 10 ?>" fill="#ffffff" font-family="'Outfit', sans-serif" font-weight="800" font-size="12" text-anchor="middle"><?= $pt['val'] ?></text>
+
+                                <!-- X-Axis Category Name -->
+                                <text x="<?= $pt['x'] ?>" y="198" fill="#ffffff" font-family="'Outfit', sans-serif" font-weight="800" font-size="12" text-anchor="middle">
+                                    <?= htmlspecialchars($pt['label']) ?>
+                                </text>
+                            <?php endforeach; ?>
+                        </svg>
+                    </div>
+
+                    <!-- Footer Axis Summary & Gradient Legend -->
+                    <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 0.8rem; color: #38bdf8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.25);">
+                            <i class="fa-solid fa-arrow-up"></i> Vertikal: Jumlah Atlet (Tinggi Wave)
+                        </div>
+                        <div style="font-size: 0.8rem; color: #34d399; font-weight: 700; background: rgba(52,211,153,0.12); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(52,211,153,0.25);">
+                            <i class="fa-solid fa-arrow-right"></i> Horizontal: U-8 (Hijau Muda) &rarr; Senior (Hijau Tua)
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -490,6 +683,101 @@ $featuredArticle = $articles[0]; // Article utama
                 navbar.style.boxShadow = 'none';
             }
         });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctxHomeKu = document.getElementById('homeKuAreaChart');
+        if (ctxHomeKu) {
+            const chartCtx = ctxHomeKu.getContext('2d');
+            const kuLabels = <?= json_encode($kuHomeLabels) ?>;
+            const kuValues = <?= json_encode($kuHomeValues) ?>;
+            const borderColors = <?= json_encode($kuHomeBorderColors) ?>;
+
+            // Multi-stop Vertical Area Gradient (Glowing Green Wave Fill)
+            let areaGradient = chartCtx.createLinearGradient(0, 0, 0, 260);
+            areaGradient.addColorStop(0, 'rgba(52, 211, 153, 0.45)');  // Glowing Mint Top
+            areaGradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.22)'); // Emerald Green Mid
+            areaGradient.addColorStop(1, 'rgba(6, 78, 59, 0.02)');     // Dark Green Fade Bottom
+
+            new Chart(ctxHomeKu, {
+                type: 'line',
+                data: {
+                    labels: kuLabels,
+                    datasets: [{
+                        label: 'Jumlah Atlet',
+                        data: kuValues,
+                        fill: true,
+                        backgroundColor: areaGradient,
+                        borderColor: '#34d399',
+                        borderWidth: 3.5,
+                        tension: 0.45,
+                        pointBackgroundColor: borderColors,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2.5,
+                        pointRadius: 6,
+                        pointHoverRadius: 9,
+                        pointHoverBackgroundColor: '#ffffff',
+                        pointHoverBorderColor: '#10b981',
+                        pointHoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1400,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(52, 211, 153, 0.5)',
+                            borderWidth: 1.5,
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(items) {
+                                    return 'Kelompok Usia: ' + items[0].label;
+                                },
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    let total = <?= (int)$totalAtletHome ?>;
+                                    let pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                                    return ' 📈 Jumlah: ' + val + ' Atlet (' + pct + '% dari total)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Keterangan Horizontal: Kelompok Usia (U-8 ➔ Senior)', color: '#34d399', font: { size: 11, weight: '700' } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#ffffff',
+                                font: { size: 12, weight: '800', family: 'Outfit, sans-serif' }
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Keterangan Vertikal: Jumlah Atlet ⬆', color: '#38bdf8', font: { size: 11, weight: '700' } },
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                stepSize: 1,
+                                precision: 0,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
     </script>
 </body>
 </html>

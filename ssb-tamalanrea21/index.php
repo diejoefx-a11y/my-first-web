@@ -146,6 +146,89 @@ if ($role === 'atlet') {
     $tournaments = $pdo->query("SELECT * FROM turnamen ORDER BY id DESC LIMIT 4")->fetchAll();
 }
 
+// Standardize Kelompok Usia ordering: U-8 (far left) -> Senior (far right)
+$kuMasterOrder = ['U-8', 'U-10', 'U-12', 'U-14', 'U-16', 'U-18', 'Senior'];
+if (!empty($kuCounts)) {
+    usort($kuCounts, function($a, $b) use ($kuMasterOrder) {
+        $posA = array_search($a['kelompok_usia'], $kuMasterOrder);
+        $posB = array_search($b['kelompok_usia'], $kuMasterOrder);
+        if ($posA === false) $posA = 999;
+        if ($posB === false) $posB = 999;
+        return $posA <=> $posB;
+    });
+}
+
+// Generate dynamic green gradient colors from Light Green (U-8) to Dark Green (Senior)
+$kuLabels = [];
+$kuValues = [];
+$kuBgColors = [];
+$kuBorderColors = [];
+$kuStatColors = [];
+$countKu = count($kuCounts ?? []);
+
+foreach (($kuCounts ?? []) as $i => $ku) {
+    $kuLabels[] = $ku['kelompok_usia'];
+    $kuValues[] = (int)$ku['total'];
+    
+    // Position ratio from 0.0 (far left, U-8) to 1.0 (far right, Senior)
+    $ratio = ($countKu > 1) ? ($i / ($countKu - 1)) : 0;
+    
+    // Lightness decreases from 68% (hijau muda) to 25% (hijau tua)
+    $lightness = round(68 - ($ratio * 43));
+    $hue = round(140 + ($ratio * 15)); // 140 (mint/emerald) -> 155 (forest green)
+    
+    $bgColor = "hsla({$hue}, 82%, {$lightness}%, 0.85)";
+    $borderLightness = min(92, $lightness + 12);
+    $borderColor = "hsl({$hue}, 85%, {$borderLightness}%)";
+    $solidColor = "hsl({$hue}, 82%, {$lightness}%)";
+    
+    $kuBgColors[] = $bgColor;
+    $kuBorderColors[] = $borderColor;
+    $kuStatColors[] = $solidColor;
+}
+
+// Compute SVG Smooth Curve Area Coordinates (100% Guaranteed Display)
+$svgWidthSys = 700;
+$svgHeightSys = 220;
+$paddingXSys = 55;
+$paddingYTopSys = 35;
+$paddingYBtmSys = 175;
+$availWidthSys = $svgWidthSys - ($paddingXSys * 2);
+$availHeightSys = $paddingYBtmSys - $paddingYTopSys;
+
+$maxValAreaSys = max(array_merge([1], $kuValues));
+$numPtsSys = count($kuCounts);
+$ptsSys = [];
+
+foreach ($kuCounts as $idx => $ku) {
+    $val = (int)$ku['total'];
+    $x = $paddingXSys + ($numPtsSys > 1 ? ($idx / ($numPtsSys - 1)) * $availWidthSys : 0);
+    $y = $paddingYBtmSys - (($val / $maxValAreaSys) * $availHeightSys);
+    $ptsSys[] = ['x' => round($x, 1), 'y' => round($y, 1), 'val' => $val, 'label' => $ku['kelompok_usia']];
+}
+
+$dPathSys = "";
+$dAreaSys = "";
+if (count($ptsSys) > 0) {
+    $dPathSys = "M " . $ptsSys[0]['x'] . "," . $ptsSys[0]['y'];
+    for ($i = 0; $i < count($ptsSys) - 1; $i++) {
+        $p0 = $ptsSys[max(0, $i - 1)];
+        $p1 = $ptsSys[$i];
+        $p2 = $ptsSys[$i + 1];
+        $p3 = $ptsSys[min(count($ptsSys) - 1, $i + 2)];
+        
+        $cp1x = $p1['x'] + ($p2['x'] - $p0['x']) / 6;
+        $cp1y = $p1['y'] + ($p2['y'] - $p0['y']) / 6;
+        $cp2x = $p2['x'] - ($p3['x'] - $p1['x']) / 6;
+        $cp2y = $p2['y'] - ($p3['y'] - $p1['y']) / 6;
+        
+        $dPathSys .= sprintf(" C %.1f,%.1f %.1f,%.1f %.1f,%.1f", $cp1x, $cp1y, $cp2x, $cp2y, $p2['x'], $p2['y']);
+    }
+    
+    $firstX = $ptsSys[0]['x'];
+    $lastX = $ptsSys[count($ptsSys) - 1]['x'];
+    $dAreaSys = $dPathSys . sprintf(" L %.1f,%d L %.1f,%d Z", $lastX, $paddingYBtmSys, $firstX, $paddingYBtmSys);
+}
 include_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -428,13 +511,10 @@ include_once __DIR__ . '/includes/header.php';
 
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap:12px;">
             <?php 
-            $kuColorList = ['#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#fb7185'];
-            $idx = 0;
-            foreach ($kuCounts as $ku): 
-                $accentColor = $kuColorList[$idx % count($kuColorList)];
+            foreach ($kuCounts as $idx => $ku): 
+                $accentColor = $kuStatColors[$idx] ?? '#34d399';
                 $isUserKu = ($ku['kelompok_usia'] === $userKu);
                 $pct = $totalAtletAll > 0 ? round(($ku['total'] / $totalAtletAll) * 100) : 0;
-                $idx++;
             ?>
                 <a href="atlet/index.php?ku=<?= urlencode($ku['kelompok_usia']) ?>" class="ku-atlet-card" style="background:<?= $isUserKu ? 'rgba(99, 102, 241, 0.18)' : 'rgba(15, 23, 42, 0.65)' ?>; padding:0.85rem 0.6rem; border-radius:14px; border:1px solid <?= $isUserKu ? 'rgba(99, 102, 241, 0.6)' : 'var(--border-glass)' ?>; border-top:4px solid <?= $accentColor ?>; text-decoration:none; display:block; text-align:center; position:relative;">
                     
@@ -706,27 +786,71 @@ include_once __DIR__ . '/includes/header.php';
             </div>
             
             <div style="display:flex; flex-direction:column; gap:1.25rem;">
-                <!-- Pie Chart Container -->
-                <div style="position:relative; height:200px; width:100%; display:flex; justify-content:center; align-items:center;">
-                    <canvas id="kuPieChart"></canvas>
-                </div>
-
-                <!-- Mini Stat Tiles Grid -->
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap:8px;">
-                    <?php 
-                    $kuColorList = ['#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#fb7185'];
-                    $idx = 0;
-                    foreach ($kuCounts as $ku): 
-                        $accentColor = $kuColorList[$idx % count($kuColorList)];
-                        $pct = $totalAtlet > 0 ? round(($ku['total'] / $totalAtlet) * 100) : 0;
-                        $idx++;
-                    ?>
-                        <div class="ku-stat-item" style="background:rgba(15,23,42,0.65); padding:0.6rem 0.4rem; border-radius:12px; border:1px solid var(--border-glass); border-top:3px solid <?= $accentColor ?>; text-align:center;">
-                            <span class="badge" style="background:rgba(255,255,255,0.08); color:#fff; font-size:0.65rem; padding:1px 5px; margin-bottom:3px; border-radius:4px;"><?= htmlspecialchars($ku['kelompok_usia']) ?></span>
-                            <div style="font-family:'Outfit', sans-serif; font-size:1.3rem; font-weight:800; color:#fff; margin:1px 0;"><?= $ku['total'] ?></div>
-                            <div style="font-size:0.68rem; color:var(--text-muted); font-weight:600;"><?= $pct ?>%</div>
+                <!-- GLOWING SMOOTH AREA CHART CONTAINER -->
+                <div class="smooth-area-chart-container" style="background: rgba(10, 15, 30, 0.6); border-radius: 16px; padding: 1.25rem; border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                    
+                    <!-- Axis Indicator Labels Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px dashed rgba(255,255,255,0.1); flex-wrap: wrap; gap: 6px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                            <i class="fa-solid fa-arrow-up" style="font-size:0.7rem;"></i> VERTIKAL: JUMLAH ATLET (SKALA TINGGI)
                         </div>
-                    <?php endforeach; ?>
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
+                            HORIZONTAL: KELOMPOK USIA (U-8 ➔ SENIOR) <i class="fa-solid fa-arrow-right" style="font-size:0.7rem;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pure SVG Glowing Smooth Area Wave Diagram (100% Always Visible!) -->
+                    <div style="position:relative; width:100%; height:220px; margin-bottom:0.85rem;">
+                        <svg viewBox="0 0 700 220" style="width:100%; height:100%; overflow:visible;">
+                            <defs>
+                                <linearGradient id="areaGlowGradSys" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#34d399" stop-opacity="0.45" />
+                                    <stop offset="50%" stop-color="#10b981" stop-opacity="0.22" />
+                                    <stop offset="100%" stop-color="#064e3b" stop-opacity="0.02" />
+                                </linearGradient>
+                                <filter id="lineShadowSys" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#34d399" flood-opacity="0.5"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Horizontal Grid Lines -->
+                            <line x1="35" y1="35" x2="665" y2="35" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4" />
+                            <line x1="35" y1="105" x2="665" y2="105" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4" />
+                            <line x1="35" y1="175" x2="665" y2="175" stroke="rgba(255,255,255,0.12)" />
+
+                            <!-- Wave Filled Area -->
+                            <path d="<?= $dAreaSys ?>" fill="url(#areaGlowGradSys)" />
+
+                            <!-- Wave Smooth Line -->
+                            <path d="<?= $dPathSys ?>" fill="none" stroke="#34d399" stroke-width="3.5" filter="url(#lineShadowSys)" stroke-linecap="round" />
+
+                            <!-- Dynamic Point Nodes & Labels -->
+                            <?php foreach ($ptsSys as $idx => $pt): 
+                                $accentColor = $kuBorderColors[$idx] ?? '#34d399';
+                            ?>
+                                <!-- Node Circle Point -->
+                                <circle cx="<?= $pt['x'] ?>" cy="<?= $pt['y'] ?>" r="6.5" fill="<?= $accentColor ?>" stroke="#ffffff" stroke-width="2.5" />
+                                
+                                <!-- Value Number Floating on Top of Point -->
+                                <text x="<?= $pt['x'] ?>" y="<?= $pt['y'] - 10 ?>" fill="#ffffff" font-family="'Outfit', sans-serif" font-weight="800" font-size="12" text-anchor="middle"><?= $pt['val'] ?></text>
+
+                                <!-- X-Axis Category Name -->
+                                <text x="<?= $pt['x'] ?>" y="198" fill="#ffffff" font-family="'Outfit', sans-serif" font-weight="800" font-size="12" text-anchor="middle">
+                                    <?= htmlspecialchars($pt['label']) ?>
+                                </text>
+                            <?php endforeach; ?>
+                        </svg>
+                    </div>
+
+                    <!-- Footer Axis Summary -->
+                    <div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div style="font-size: 0.78rem; color: #38bdf8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.25);">
+                            <i class="fa-solid fa-arrow-up"></i> Vertikal: Jumlah Atlet (Tinggi Wave)
+                        </div>
+                        <div style="font-size: 0.78rem; color: #34d399; font-weight: 700; background: rgba(52,211,153,0.12); padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(52,211,153,0.25);">
+                            <i class="fa-solid fa-arrow-right"></i> Horizontal: U-8 (Hijau Muda) &rarr; Senior (Hijau Tua)
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -875,66 +999,100 @@ include_once __DIR__ . '/includes/header.php';
 
 <?php endif; ?>
 
-<?php
-// Prepare KU Chart data
-$kuLabels = array_column($kuCounts ?? [], 'kelompok_usia');
-$kuValues = array_column($kuCounts ?? [], 'total');
-$kuColors = ['#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#fb7185'];
-?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // 1. CHART PIE KELOMPOK USIA
-    const ctxPie = document.getElementById('kuPieChart');
-    if (ctxPie) {
-        new Chart(ctxPie, {
-            type: 'doughnut',
-            data: {
-                labels: <?= json_encode($kuLabels) ?>,
-                datasets: [{
-                    data: <?= json_encode($kuValues) ?>,
-                    backgroundColor: <?= json_encode(array_slice($kuColors, 0, count($kuLabels))) ?>,
-                    borderColor: '#0f172a',
-                    borderWidth: 3,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: '#94a3b8',
-                            font: { size: 11, weight: '600' },
-                            padding: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. DIAGRAM AREA SMOOTH KELOMPOK USIA
+        const ctxKuBar = document.getElementById('kuAreaChart');
+        if (ctxKuBar) {
+            const chartCtx = ctxKuBar.getContext('2d');
+            const kuLabels = <?= json_encode($kuLabels) ?>;
+            const kuValues = <?= json_encode($kuValues) ?>;
+            const borderColors = <?= json_encode($kuBorderColors) ?>;
+
+            // Multi-stop Vertical Area Gradient (Glowing Green Wave Fill)
+            let areaGradient = chartCtx.createLinearGradient(0, 0, 0, 240);
+            areaGradient.addColorStop(0, 'rgba(52, 211, 153, 0.45)');  // Glowing Mint Top
+            areaGradient.addColorStop(0.5, 'rgba(16, 185, 129, 0.22)'); // Emerald Green Mid
+            areaGradient.addColorStop(1, 'rgba(6, 78, 59, 0.02)');     // Dark Green Fade Bottom
+
+            new Chart(ctxKuBar, {
+                type: 'line',
+                data: {
+                    labels: kuLabels,
+                    datasets: [{
+                        label: 'Jumlah Atlet',
+                        data: kuValues,
+                        fill: true,
+                        backgroundColor: areaGradient,
+                        borderColor: '#34d399',
+                        borderWidth: 3.5,
+                        tension: 0.45,
+                        pointBackgroundColor: borderColors,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2.5,
+                        pointRadius: 6,
+                        pointHoverRadius: 9,
+                        pointHoverBackgroundColor: '#ffffff',
+                        pointHoverBorderColor: '#10b981',
+                        pointHoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1400,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: 'rgba(52, 211, 153, 0.5)',
+                            borderWidth: 1.5,
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(items) {
+                                    return 'Kelompok Usia: ' + items[0].label;
+                                },
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    let total = <?= (int)($totalAtlet ?? 0) ?>;
+                                    let pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                                    return ' 📈 Jumlah: ' + val + ' Atlet (' + pct + '% dari total)';
+                                }
+                            }
                         }
                     },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleColor: '#fff',
-                        bodyColor: '#cbd5e1',
-                        borderColor: 'rgba(99, 102, 241, 0.4)',
-                        borderWidth: 1,
-                        padding: 10,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                let val = context.raw || 0;
-                                let total = context.chart._metasets[0].total;
-                                let pct = Math.round((val / total) * 100);
-                                return ' ' + label + ': ' + val + ' Atlet (' + pct + '%)';
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Keterangan Horizontal: Kelompok Usia (U-8 ➔ Senior)', color: '#34d399', font: { size: 11, weight: '700' } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#ffffff',
+                                font: { size: 11, weight: '700', family: 'Outfit, sans-serif' }
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Keterangan Vertikal: Jumlah Atlet ⬆', color: '#38bdf8', font: { size: 11, weight: '700' } },
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                stepSize: 1,
+                                precision: 0,
+                                font: { size: 11 }
                             }
                         }
                     }
-                },
-                cutout: '65%'
-            }
-        });
-    }
+                }
+            });
+        }
 
     // 2. DIAGRAM BAR ANALISIS SPP (LUNAS VS TUNGGAKAN)
     const ctxSpp = document.getElementById('sppBarChart');
@@ -1013,11 +1171,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             <?= round((float)($kuAvg['avg_tackling'] ?? 70)) ?>,
                             <?= round((float)($kuAvg['avg_stamina'] ?? 70)) ?>
                         ],
-                        backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                        borderColor: 'rgba(56, 189, 248, 0.8)',
-                        borderWidth: 2,
+                        backgroundColor: 'rgba(251, 191, 36, 0.18)',
+                        borderColor: '#fbbf24',
+                        borderWidth: 2.5,
                         borderDash: [4, 4],
-                        pointBackgroundColor: '#38bdf8'
+                        pointBackgroundColor: '#fbbf24',
+                        pointBorderColor: '#fff'
                     }
                 ]
             },
