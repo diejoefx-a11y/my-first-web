@@ -1,0 +1,409 @@
+/* assets/css/timer.css - Jam Catur Digital Mobile & Split Screen */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap');
+
+:root {
+    --clock-bg: #090d16;
+    --white-side-bg: #1e293b;
+    --white-side-active: #2563eb;
+    --black-side-bg: #0f172a;
+    --black-side-active: #dc2626;
+    --text-light: #ffffff;
+    --text-dim: #94a3b8;
+    --accent-gold: #f59e0b;
+    --danger-red: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--clock-bg);
+    color: var(--text-light);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    touch-action: manipulation;
+}
+
+.chess-clock-app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Clock Player Side */
+.clock-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+.clock-side:active {
+    filter: brightness(0.92);
+}
+
+/* Sisi Hitam (Atas) - Diputar 180 derajat untuk pemain yang duduk berhadapan */
+.clock-side-black {
+    background: #0f172a;
+    border-bottom: 2px solid #1e293b;
+}
+
+.clock-side-black.rotated {
+    transform: rotate(180deg);
+}
+
+.clock-side-black.active {
+    background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+    box-shadow: inset 0 0 50px rgba(99, 102, 241, 0.3);
+}
+
+/* Sisi Putih (Bawah) */
+.clock-side-white {
+    background: #1e293b;
+}
+
+.clock-side-white.active {
+    background: linear-gradient(0deg, #1e3a8a 0%, #1d4ed8 100%);
+    box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.35);
+}
+
+/* Low Time & Critical States */
+.clock-side.low-time.active {
+    background: linear-gradient(135deg, #78350f 0%, #b45309 100%) !important;
+    animation: pulseWarn 1.2s infinite alternate;
+}
+
+.clock-side.critical-time.active {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%) !important;
+    animation: pulseDanger 0.6s infinite alternate;
+}
+
+@keyframes pulseWarn {
+    from { box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.4); }
+    to { box-shadow: inset 0 0 70px rgba(245, 158, 11, 0.8); }
+}
+
+@keyframes pulseDanger {
+    from { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.5); }
+    to { box-shadow: inset 0 0 90px rgba(239, 68, 68, 1); }
+}
+
+/* Player Meta & Digit Display */
+.clock-player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 450px;
+    margin-bottom: 0.5rem;
+}
+
+.clock-player-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.side-indicator-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.side-indicator-icon.white-piece {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.side-indicator-icon.black-piece {
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid #475569;
+}
+
+.player-display-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.move-count-badge {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-dim);
+}
+
+.clock-digits {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(3.5rem, 14vw, 6.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    font-variant-numeric: tabular-nums;
+}
+
+.clock-side:not(.active) .clock-digits {
+    opacity: 0.45;
+}
+
+.increment-tag {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dim);
+}
+
+/* Central Floating Control Bar */
+.center-control-bar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+    padding: 0.45rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.ctrl-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ctrl-btn:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.ctrl-btn-primary {
+    background: #2563eb;
+    border-color: #3b82f6;
+    font-size: 1.3rem;
+}
+
+.ctrl-btn-primary:active {
+    background: #1d4ed8;
+}
+
+.match-info-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0.5rem;
+}
+
+.table-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-indicator {
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sync-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+}
+
+.sync-dot.saving {
+    background: #f59e0b;
+    animation: blink 0.8s infinite;
+}
+
+.sync-dot.offline {
+    background: #ef4444;
+}
+
+@keyframes blink {
+    50% { opacity: 0.3; }
+}
+
+/* Modals inside Timer */
+.timer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+.timer-modal.active {
+    display: flex;
+}
+
+.timer-modal-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 420px;
+    color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    text-align: center;
+}
+
+.timer-modal-card h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.timer-modal-card p {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.t-btn {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.t-btn-primary { background: #2563eb; color: #ffffff; }
+.t-btn-success { background: #10b981; color: #ffffff; }
+.t-btn-danger { background: #dc2626; color: #ffffff; }
+.t-btn-secondary { background: #334155; color: #ffffff; }
+
+.t-btn:active { transform: scale(0.97); }
+
+/* Game Over Flag Overlay */
+.flag-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(220, 38, 38, 0.95);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    padding: 2rem;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.flag-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: flagBounce 1s infinite alternate;
+}
+
+@keyframes flagBounce {
+    from { transform: translateY(-5px); }
+    to { transform: translateY(5px); }
+}
+
+.flag-title {
+    font-size: 2.25rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.flag-desc {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+/* Landscape Mode Adjustments */
+@media (orientation: landscape) {
+    .chess-clock-app {
+        flex-direction: row;
+    }
+    .clock-side-black {
+        border-bottom: none;
+        border-right: 2px solid #1e293b;
+    }
+    .clock-side-black.rotated {
+        transform: rotate(0deg); /* Dalam landscape kiri-kanan lebih nyaman menghadap normal */
+    }
+    .clock-digits {
+        font-size: clamp(3rem, 10vw, 5.5rem);
+    }
+}
