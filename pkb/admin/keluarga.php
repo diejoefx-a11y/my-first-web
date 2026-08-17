@@ -429,7 +429,7 @@ $families = $stmt->fetchAll();
             <!-- Filter Kelompok -->
             <div>
                 <select name="kelompok_id" class="form-control-custom">
-                    <option value="">🏷️ Semua Kelompok (1-14)</option>
+                    <option value="">🏷️ Semua Kelompok (1-17)</option>
                     <?php foreach ($groupsList as $grp): ?>
                         <option value="<?= $grp['id'] ?>" <?= $filterKelompok == $grp['id'] ? 'selected' : '' ?>>
                             Kelompok <?= $grp['nomor_kelompok'] ?> - <?= htmlspecialchars($grp['nama_kelompok']) ?>

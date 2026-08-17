@@ -59,7 +59,7 @@ $groups = $db->query($sql)->fetchAll();
 
 <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
-        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--adm-secondary);">Data Master Kelompok (1 - 14)</h3>
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--adm-secondary);">Data Master Kelompok (1 - 17)</h3>
         <small style="color: var(--adm-text-muted);">Kelola pengurus (Ketua & Sekretaris), Berita Portal, Galeri Foto, serta Akun Login Admin Kelompok</small>
     </div>
     <button type="button" class="btn btn-primary btn-sm" onclick="openAddModal()" style="border-radius: var(--adm-radius-full); font-weight: 700;">
@@ -174,7 +174,7 @@ $groups = $db->query($sql)->fetchAll();
 
                 <div class="form-grid" style="gap: 1rem;">
                     <div class="form-group">
-                        <label>Nomor Kelompok (1 - 14) <span class="required">*</span></label>
+                        <label>Nomor Kelompok (1 - 17) <span class="required">*</span></label>
                         <input type="number" name="nomor_kelompok" id="form-nomor" class="form-control" min="1" max="99" required>
                     </div>
 

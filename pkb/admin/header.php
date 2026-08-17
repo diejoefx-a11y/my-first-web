@@ -58,7 +58,7 @@ $user = $_SESSION['admin_user'] ?? ['nama' => 'Administrator', 'username' => 'ad
                 </li>
                 <li>
                     <a href="kelompok.php" class="<?= $currentPage === 'kelompok.php' ? 'active' : '' ?>">
-                        <span>🏷️</span> Data Kelompok (1-14)
+                        <span>🏷️</span> Data Kelompok (1-17)
                     </a>
                 </li>
                 <li>

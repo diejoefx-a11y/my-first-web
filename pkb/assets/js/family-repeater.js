@@ -12,49 +12,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let memberIndex = 0;
 
+    // Palette of 7 distinct dynamic color themes for family members
+    const MEMBER_THEMES = [
+        { class: 'member-theme-indigo', icon: '👤', defaultRole: 'Kepala Keluarga', labelName: 'Kepala Keluarga (Data Pokok)', badgePrefix: '👤' },
+        { class: 'member-theme-rose', icon: '🌸', defaultRole: 'Istri', labelName: 'Istri / Anggota', badgePrefix: '🌸' },
+        { class: 'member-theme-emerald', icon: '🌱', defaultRole: 'Anak', labelName: 'Anak / Anggota', badgePrefix: '🌱' },
+        { class: 'member-theme-cyan', icon: '🌊', defaultRole: 'Anak', labelName: 'Anak / Anggota', badgePrefix: '🌊' },
+        { class: 'member-theme-violet', icon: '✨', defaultRole: 'Anak', labelName: 'Anggota Keluarga', badgePrefix: '✨' },
+        { class: 'member-theme-amber', icon: '☀️', defaultRole: 'Famili Lain', labelName: 'Anggota Keluarga', badgePrefix: '☀️' },
+        { class: 'member-theme-lime', icon: '🍀', defaultRole: 'Famili Lain', labelName: 'Anggota Keluarga', badgePrefix: '🍀' }
+    ];
+
     // Template for new member row
     function createMemberHtml(index, isFirst = false) {
-        const defaultRole = isFirst ? 'Kepala Keluarga' : 'Istri';
+        const themeIndex = index % MEMBER_THEMES.length;
+        const theme = MEMBER_THEMES[themeIndex];
+        const defaultRole = isFirst ? 'Kepala Keluarga' : theme.defaultRole;
+        const badgeTitle = isFirst ? '👤 Kepala Keluarga (Data Pokok)' : `${theme.badgePrefix} Anggota #${index + 1}`;
+
         return `
-        <div class="member-card" id="member-row-${index}" data-index="${index}" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 1.25rem; margin-bottom: 0.75rem;">
-            <div class="member-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
-                <span class="member-badge" style="font-weight: 800; color: #7c3aed; font-size: 0.9rem;">
-                    ${isFirst ? '👤 Kepala Keluarga (Data Pokok)' : `👨‍👩‍👧‍👦 Anggota #${index + 1}`}
+        <div class="member-card ${theme.class}" id="member-row-${index}" data-index="${index}">
+            <div class="member-header">
+                <span class="member-badge">
+                    ${badgeTitle}
                 </span>
-                ${!isFirst ? `<button type="button" class="btn btn-sm btn-remove-member" data-index="${index}" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:8px; padding:2px 10px; font-weight:700; font-size:0.75rem; cursor:pointer;">✕ Hapus</button>` : `<span style="font-size:0.75rem; color:#64748b; background:#ede9fe; padding:2px 8px; border-radius:6px; font-weight:700;">Kepala Keluarga</span>`}
+                ${!isFirst ? `<button type="button" class="btn btn-sm btn-remove-member" data-index="${index}" style="background:rgba(239, 68, 68, 0.2); color:#fca5a5; border:1px solid rgba(239, 68, 68, 0.45); border-radius:8px; padding:4px 12px; font-weight:700; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">✕ Hapus</button>` : `<span style="font-size:0.75rem; background:rgba(99, 102, 241, 0.25); border: 1px solid rgba(129, 140, 248, 0.45); color:#c7d2fe; padding:3px 10px; border-radius:6px; font-weight:700;">Kepala Keluarga</span>`}
             </div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+                    <label><i class="fa-solid fa-user"></i> Nama Lengkap <span style="color:#f87171;">*</span></label>
                     <input type="text" name="members[${index}][nama_lengkap]" class="form-control input-nama" placeholder="Sesuai KTP/KK" ${isFirst ? 'required' : ''}>
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">NIK</label>
-                    <input type="text" name="members[${index}][nik]" class="form-control input-nik" maxlength="16" placeholder="16 digit NIK">
+                    <label><i class="fa-solid fa-id-card"></i> Nomor Induk Kependudukan (KTP) (Opsional)</label>
+                    <input type="text" name="members[${index}][nik]" class="form-control input-nik" maxlength="16" placeholder="16 digit NIK (jika ada)">
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">Hubungan Keluarga <span style="color:#ef4444;">*</span></label>
+                    <label><i class="fa-solid fa-people-roof"></i> Hubungan Keluarga <span style="color:#f87171;">*</span></label>
                     <select name="members[${index}][hubungan_keluarga]" class="form-control">
                         <option value="Kepala Keluarga" ${defaultRole === 'Kepala Keluarga' ? 'selected' : ''}>Kepala Keluarga</option>
                         <option value="Istri" ${defaultRole === 'Istri' ? 'selected' : ''}>Istri</option>
-                        <option value="Anak">Anak</option>
-                        <option value="Orang Tua">Orang Tua</option>
-                        <option value="Famili Lain">Famili Lain</option>
+                        <option value="Anak" ${defaultRole === 'Anak' ? 'selected' : ''}>Anak</option>
+                        <option value="Orang Tua" ${defaultRole === 'Orang Tua' ? 'selected' : ''}>Orang Tua</option>
+                        <option value="Famili Lain" ${defaultRole === 'Famili Lain' ? 'selected' : ''}>Famili Lain</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">Jenis Kelamin</label>
+                    <label><i class="fa-solid fa-venus-mars"></i> Jenis Kelamin</label>
                     <select name="members[${index}][jenis_kelamin]" class="form-control">
                         <option value="L">Laki-Laki</option>
                         <option value="P">Perempuan</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">Tempat Lahir</label>
+                    <label><i class="fa-solid fa-location-dot"></i> Tempat Lahir</label>
                     <input type="text" name="members[${index}][tempat_lahir]" class="form-control" placeholder="Kota/Kabupaten">
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.85rem; font-weight:600;">Tanggal Lahir</label>
+                    <label><i class="fa-solid fa-calendar-days"></i> Tanggal Lahir</label>
                     <input type="date" name="members[${index}][tanggal_lahir]" class="form-control">
                 </div>
             </div>
@@ -65,9 +80,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateMemberNumbers() {
         const rows = container.querySelectorAll('.member-card');
         rows.forEach((row, idx) => {
+            const themeIndex = idx % MEMBER_THEMES.length;
+            const theme = MEMBER_THEMES[themeIndex];
+            
+            // Remove previous theme classes and apply current theme
+            MEMBER_THEMES.forEach(t => row.classList.remove(t.class));
+            row.classList.add(theme.class);
+
             if (idx > 0) {
                 const badge = row.querySelector('.member-badge');
-                if (badge) badge.textContent = `👨‍👩‍👧‍👦 Anggota #${idx + 1}`;
+                if (badge) badge.textContent = `${theme.badgePrefix} Anggota #${idx + 1}`;
             }
         });
     }

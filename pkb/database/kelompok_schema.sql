@@ -28,7 +28,10 @@ INSERT INTO `groups` (`id`, `nomor_kelompok`, `nama_kelompok`, `nama_ketua`, `no
 (11, 11, 'Kelompok 11', 'H. Iskandar', '081234567811', 'RT 03 / RW 03', 'Cakupan Wilayah Utara'),
 (12, 12, 'Kelompok 12', 'Baharuddin, S.Ag', '081234567812', 'RT 04 / RW 03', 'Cakupan Wilayah Utara'),
 (13, 13, 'Kelompok 13', 'Zainal Abidin', '081234567813', 'RT 01 / RW 04', 'Cakupan Wilayah Selatan'),
-(14, 14, 'Kelompok 14', 'Hj. Rosdiana', '081234567814', 'RT 02 / RW 04', 'Cakupan Wilayah Selatan')
+(14, 14, 'Kelompok 14', 'Hj. Rosdiana', '081234567814', 'RT 02 / RW 04', 'Cakupan Wilayah Selatan'),
+(15, 15, 'Kelompok 15', 'Ketua Kelompok 15', '081234567815', 'RT 03 / RW 04', 'Cakupan Wilayah Pelayanan 15'),
+(16, 16, 'Kelompok 16', 'Ketua Kelompok 16', '081234567816', 'RT 04 / RW 04', 'Cakupan Wilayah Pelayanan 16'),
+(17, 17, 'Kelompok 17', 'Ketua Kelompok 17', '081234567817', 'RT 05 / RW 04', 'Cakupan Wilayah Pelayanan 17')
 ON DUPLICATE KEY UPDATE `nama_kelompok` = VALUES(`nama_kelompok`);
 
 -- 3. Tambah Kolom kelompok_id di Tabel families

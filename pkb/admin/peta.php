@@ -40,7 +40,7 @@ $families = $stmt->fetchAll();
         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
             <div>
                 <select id="filter-kelompok" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; min-width: 150px;">
-                    <option value="">Semua Kelompok (1-14)</option>
+                    <option value="">Semua Kelompok (1-17)</option>
                     <?php foreach ($groupsList as $grp): ?>
                         <option value="<?= $grp['id'] ?>"><?= htmlspecialchars($grp['nama_kelompok']) ?></option>
                     <?php endforeach; ?>

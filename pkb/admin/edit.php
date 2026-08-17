@@ -190,7 +190,7 @@ require_once __DIR__ . '/header.php';
                 <input type="text" name="nama_kepala" class="form-control" value="<?= htmlspecialchars($family['nama_kepala']) ?>" required>
             </div>
             <div class="form-group">
-                <label>Kelompok Domisili (1 - 14) <span class="required">*</span></label>
+                <label>Kelompok Domisili (1 - 17) <span class="required">*</span></label>
                 <select name="kelompok_id" class="form-control" required>
                     <option value="">-- Pilih Kelompok --</option>
                     <?php foreach ($groupsList as $grp): ?>

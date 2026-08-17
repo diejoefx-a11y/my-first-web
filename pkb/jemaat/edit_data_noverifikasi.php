@@ -1,7 +1,12 @@
 <?php
 /**
- * FORMULIR PEMBARUAN / EDIT DATA KELUARGA & TITIK RUMAH JEMAAT
+ * FORMULIR EDIT DATA KELUARGA & TITIK RUMAH JEMAAT (TANPA VERIFIKASI / TANPA SESI)
  * Persekutuan Kaum Bapak (PKB)
+ * 
+ * Fitur:
+ * - Pencarian langsung nomor KK tanpa proteksi sesi
+ * - Tidak memerlukan status 'terverifikasi'
+ * - Pengeditan data pokok keluarga, koordinat GPS, foto, dan anggota keluarga
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -13,7 +18,7 @@ $successMsg = '';
 $family = null;
 $members = [];
 
-// Step 1: Handle Search / Lookup by No. KK
+// Step 1: Handle Search / Lookup by No. KK (Langsung tanpa verifikasi)
 $lookup_kk = preg_replace('/[^0-9]/', '', $_GET['kk'] ?? ($_POST['lookup_kk'] ?? ''));
 
 if (!empty($lookup_kk)) {
@@ -31,7 +36,7 @@ if (!empty($lookup_kk)) {
     }
 }
 
-// Step 2: Handle POST Update
+// Step 2: Handle POST Update Data
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_data') {
     $family_id = intval($_POST['family_id'] ?? 0);
     $no_kk = preg_replace('/[^0-9]/', '', $_POST['no_kk'] ?? '');
@@ -167,7 +172,7 @@ $groupsList = $db->query("SELECT id, nomor_kelompok, nama_kelompok, nama_ketua F
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perbarui / Edit Data KK & Titik Rumah - PKBGT</title>
+    <title>Edit Data Keluarga (Tanpa Verifikasi) - PKBGT</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -629,24 +634,24 @@ $groupsList = $db->query("SELECT id, nomor_kelompok, nama_kelompok, nama_ketua F
 
     <div class="container main-wrapper" style="margin-top: 1.75rem;">
 
-        <!-- SEARCH / LOOKUP CARD (DYNAMIC LEAF GREEN GRADIENT THEME) -->
+        <!-- SEARCH / LOOKUP CARD (DIRECT LOOKUP) -->
         <div class="card card-leaf-green-dynamic">
             <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem;">
                 <div class="card-icon-leaf-green">
-                    🔒
+                    🔍
                 </div>
                 <div>
-                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: #f0fdf4; margin: 0; letter-spacing: -0.3px;">Login Jemaat</h3>
-                    <small style="color: #bbf7d0; font-size: 0.88rem;">Ketik nomor Kartu Keluarga Anda untuk Login ke Aplikasi Sensus Data Jemaat</small>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: #f0fdf4; margin: 0; letter-spacing: -0.3px;">Cari Data Kartu Keluarga</h3>
+                    <small style="color: #bbf7d0; font-size: 0.88rem;">Ketik 16 digit nomor Kartu Keluarga Anda untuk membuka formulir edit data keluarga</small>
                 </div>
             </div>
 
-            <form action="cek_kk.php" method="GET" style="display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center;">
+            <form action="edit_data_noverifikasi.php" method="GET" style="display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center;">
                 <div style="flex: 1; min-width: 260px;">
                     <input type="text" name="kk" class="form-control input-search-leaf" maxlength="16" placeholder="Masukkan 16 digit Nomor Kartu Keluarga Anda..." value="<?= htmlspecialchars($lookup_kk) ?>" required>
                 </div>
                 <button type="submit" class="btn-search-leaf-green">
-                    <i class="fa-solid fa-lock"></i> <span>Login</span>
+                    <i class="fa-solid fa-magnifying-glass"></i> <span>Buka Data</span>
                 </button>
             </form>
         </div>
@@ -926,7 +931,7 @@ $groupsList = $db->query("SELECT id, nomor_kelompok, nama_kelompok, nama_ketua F
                                              <?= $rowIdx + 1 ?>
                                         </td>
                                         <td>
-                                            <input type="text" name="members[<?= $rowIdx ?>][nama_lengkap]" class="form-control-sm input-nama" value="<?= htmlspecialchars($m['nama_lengkap']) ?>" placeholder="Nama lengkap..." required>
+                                             <input type="text" name="members[<?= $rowIdx ?>][nama_lengkap]" class="form-control-sm input-nama" value="<?= htmlspecialchars($m['nama_lengkap']) ?>" placeholder="Nama lengkap..." required>
                                             <?php if ($isFirst): ?>
                                                 <small style="color: #0891b2; font-weight: 700; font-size: 0.72rem; display: block; margin-top: 2px;">(Kepala Keluarga)</small>
                                             <?php endif; ?>
@@ -973,7 +978,7 @@ $groupsList = $db->query("SELECT id, nomor_kelompok, nama_kelompok, nama_ketua F
                 <!-- SUBMIT BUTTON -->
                 <div style="text-align: right; margin-bottom: 3.5rem; margin-top: 1.5rem;">
                     <button type="submit" class="btn-submit-leaf-green">
-                        <i class="fa-solid fa-floppy-disk"></i> <span>Simpan Pembaruan data</span>
+                        <i class="fa-solid fa-floppy-disk"></i> <span>Simpan Pembaruan Data</span>
                     </button>
                 </div>
 
